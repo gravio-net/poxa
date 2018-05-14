@@ -22,7 +22,7 @@ defmodule Poxa.WebHook.Dispatcher do
     case EventTable.ready do
       {_, [] } -> {:noreply, state, @timeout}
       {timestamp, events} ->
-        :ok = send_web_hook!(events)
+        send_web_hook!(events)
         EventTable.clear_older(timestamp)
         {:noreply, state, @timeout}
     end
@@ -40,9 +40,14 @@ defmodule Poxa.WebHook.Dispatcher do
     Logger.debug "Sending webhook request."
     body = Poison.encode! %{time_ms: time_ms(), events: events}
     {:ok, url} = Application.fetch_env(:poxa, :web_hook)
-    case HTTPoison.post(url, body, pusher_headers(body)) do
-      {:ok, _} -> :ok
-      error -> error
+   
+    if String.strip(url) == "" do
+      {:ok, "ok"}
+    else
+      case HTTPoison.post(url, body, pusher_headers(body)) do
+        {:ok, _} -> :ok
+        error -> error
+      end
     end
   end
 
